@@ -28,3 +28,10 @@ When reading issues:
 
 When closing issues via commit:
 - Include fixes #<number> or closes #<number> in the commit message. This automatically closes the issue when the commit is merged.
+
+---
+
+- ACP (Agent Client Protocol) is a protocol that lets us interface with CLI agents like codex. When working on anything ACP related, you can use:
+  - @.plan/docs/ACP_docs.md for all of ACP's documentation
+  - @.plan/docs/ACP_SDK_notes.md for a reference to how the ACP SDK is implemented
+  - @.plan/docs/ACP_reference_project.md for notes on ~/Repositories/kanbanana/vscode-acp, a client that implements ACP
