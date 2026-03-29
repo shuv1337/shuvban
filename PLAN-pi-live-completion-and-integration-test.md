@@ -300,15 +300,15 @@ Make it impossible for pi hook delivery failures to disappear silently.
 
 ### Tasks
 
-- [ ] Add explicit telemetry for **every pi hook delivery attempt** in the generated extension path.
-- [ ] Add telemetry for **hook subprocess result classification**:
+- [x] Add explicit telemetry for **every pi hook delivery attempt** in the generated extension path.
+- [x] Add telemetry for **hook subprocess result classification**:
   - attempted
   - succeeded
   - failed before spawn
   - failed with non-zero exit
   - failed because hook runtime env was missing
   - failed because Kanban hook ingest returned an error
-- [ ] Include stable correlation fields on pi hook telemetry:
+- [x] Include stable correlation fields on pi hook telemetry:
   - `workspaceId`
   - `taskId`
   - `hookEvent`
@@ -322,12 +322,12 @@ Make it impossible for pi hook delivery failures to disappear silently.
   - `exitCode`
   - `errorClass`
   - `errorMessage`
-- [ ] Add one debug artifact path for local investigation, gated behind an env flag if needed, e.g. per-task JSONL under:
+- [x] Add one debug artifact path for local investigation, gated behind an env flag if needed, e.g. per-task JSONL under:
   - `~/.cline/kanban/hooks/pi/logs/<workspace>/<task>.jsonl`
   - **This JSONL file is the primary observable telemetry sink for hook delivery.** The current `writeStructuredRuntimeLog()` in `src/telemetry/runtime-log.ts` is just `process.stderr.write()` - but stderr belongs to the short-lived `hooks notify` subprocess, which is not captured or persisted anywhere. Without a file-based sink, Phase 2 will have no observable failure signal from the extension side.
-- [ ] Update the generated pi extension's `notify()` catch block to **write structured failure records to the JSONL log path** instead of swallowing silently. The extension runs inside the pi process (long-lived), so it has access to write the JSONL file directly. This is the only reliable place to capture extension-side failures.
-- [ ] Ensure `hooks notify` / `hooks ingest` can emit a structured success/failure signal consumable by the caller, even if `notify` remains best-effort from a product perspective.
-- [ ] Verify `KANBAN_RUNTIME_PORT` is present in the pi PTY process environment. If it is missing or incorrect, the hook subprocess connects to the default port (3484) instead of the actual runtime. Consider making `createHookRuntimeEnv()` explicitly include the port alongside `KANBAN_HOOK_TASK_ID` and `KANBAN_HOOK_WORKSPACE_ID`.
+- [x] Update the generated pi extension's `notify()` catch block to **write structured failure records to the JSONL log path** instead of swallowing silently. The extension runs inside the pi process (long-lived), so it has access to write the JSONL file directly. This is the only reliable place to capture extension-side failures.
+- [x] Ensure `hooks notify` / `hooks ingest` can emit a structured success/failure signal consumable by the caller, even if `notify` remains best-effort from a product perspective.
+- [x] Verify `KANBAN_RUNTIME_PORT` is present in the pi PTY process environment. If it is missing or incorrect, the hook subprocess connects to the default port (3484) instead of the actual runtime. Consider making `createHookRuntimeEnv()` explicitly include the port alongside `KANBAN_HOOK_TASK_ID` and `KANBAN_HOOK_WORKSPACE_ID`.
 
 ### Rationale
 
@@ -341,9 +341,9 @@ That makes root cause invisible. The JSONL log file is the fix - it gives both t
 
 ### Validation
 
-- [ ] Starting a pi task emits a visible hook-attempt telemetry event.
-- [ ] A successful hook updates `lastHookAt`.
-- [ ] A forced failure (e.g. missing env or invalid port in a targeted test) emits structured failure telemetry.
+- [x] Starting a pi task emits a visible hook-attempt telemetry event.
+- [x] A successful hook updates `lastHookAt`.
+- [x] A forced failure (e.g. missing env or invalid port in a targeted test) emits structured failure telemetry.
 
 ---
 
@@ -496,12 +496,12 @@ Possible implementations:
 
 #### Required hermetic test cases
 
-- [ ] **pi hook activity updates session metadata**
+- [x] **pi hook activity updates session metadata**
   - start running session
   - inject pi activity hook
   - assert `lastHookAt` and `latestHookActivity.source === "pi"`
 
-- [ ] **pi completion moves task to awaiting_review**
+- [x] **pi completion moves task to awaiting_review**
   - start running session
   - inject the chosen completion event path
   - assert:
@@ -509,13 +509,13 @@ Possible implementations:
     - `reviewReason === "hook"`
     - review broadcast occurs
 
-- [ ] **pi resumed task returns to running on follow-up input and then back to review on completion**
+- [x] **pi resumed task returns to running on follow-up input and then back to review on completion**
 
-- [ ] **pi hook failures are surfaced in telemetry**
+- [x] **pi hook failures are surfaced in telemetry**
   - invalid env / invalid runtime endpoint / command failure
   - assert structured failure log is emitted
 
-- [ ] **pi final-message metadata is preserved when available**
+- [x] **pi final-message metadata is preserved when available**
 
 ### Layer B - real pi smoke/integration test (opt-in, not default CI)
 
