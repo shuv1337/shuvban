@@ -12,7 +12,7 @@ export function openInBrowser(url: string, deps?: BrowserOpenDeps): void {
 		const options =
 			process.platform === "linux" ? { app: { name: "xdg-open" } } : {};
 		open(url, options);
-	} catch (err) {
+	} catch (_err) {
 		const warn = deps?.warn ?? (() => {});
 		warn(`Could not open browser automatically. Open this URL manually: ${url}`);
 	}

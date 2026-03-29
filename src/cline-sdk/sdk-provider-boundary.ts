@@ -3,7 +3,7 @@
 // auth, catalog, and provider-settings behavior stay behind one boundary.
 import {
 	ClineAccountService,
-	ClineAccountUser,
+	type ClineAccountUser,
 	getValidClineCredentials,
 	getValidOcaCredentials,
 	getValidOpenAICodexCredentials,
@@ -12,7 +12,7 @@ import {
 	loginOcaOAuth,
 	loginOpenAICodex,
 	ProviderSettingsManager,
-	ClineOrganization,
+	type ClineOrganization,
 } from "@clinebot/core/node";
 import { LlmsModels as llmsModels } from "@clinebot/llms";
 import { createMcpTools, type CreateMcpToolsOptions, type Tool } from "@clinebot/agents";
