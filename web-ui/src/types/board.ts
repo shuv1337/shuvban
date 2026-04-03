@@ -36,6 +36,31 @@ export function getTaskAutoReviewCancelButtonLabel(mode: TaskAutoReviewMode | nu
 	return "Cancel Auto-commit";
 }
 
+export interface ExternalIssueRemoteState {
+	id: string;
+	name: string;
+	type: string;
+}
+
+export interface ExternalIssueSource {
+	provider: "linear";
+	issueId: string;
+	identifier: string;
+	url: string;
+	teamId: string | null;
+	projectId: string | null;
+	parentIssueId: string | null;
+	lastRemoteUpdatedAt: number | null;
+	lastSyncedAt: number | null;
+	remoteState?: ExternalIssueRemoteState | null;
+	labelNames?: string[];
+}
+
+export interface ExternalIssueSyncState {
+	status: "idle" | "syncing" | "error";
+	lastError: string | null;
+}
+
 export interface BoardCard {
 	id: string;
 	prompt: string;
@@ -46,6 +71,8 @@ export interface BoardCard {
 	baseRef: string;
 	createdAt: number;
 	updatedAt: number;
+	externalSource?: ExternalIssueSource;
+	externalSync?: ExternalIssueSyncState;
 }
 
 export interface BoardColumn {

@@ -5,56 +5,56 @@ import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import type {
-	RuntimeCommandRunRequest,
-	RuntimeCommandRunResponse,
-	RuntimeConfigResponse,
-	RuntimeConfigSaveRequest,
-	RuntimeDebugResetAllStateResponse,
-	RuntimeGitCheckoutRequest,
-	RuntimeGitCheckoutResponse,
-	RuntimeGitCommitDiffRequest,
-	RuntimeGitCommitDiffResponse,
-	RuntimeGitDiscardResponse,
-	RuntimeGitLogRequest,
-	RuntimeGitLogResponse,
-	RuntimeGitRefsResponse,
-	RuntimeGitSummaryResponse,
-	RuntimeGitSyncAction,
-	RuntimeGitSyncResponse,
-	RuntimeHookIngestRequest,
-	RuntimeHookIngestResponse,
-	RuntimeOpenFileRequest,
-	RuntimeOpenFileResponse,
-	RuntimeProjectAddRequest,
-	RuntimeProjectAddResponse,
-	RuntimeProjectDirectoryPickerResponse,
-	RuntimeProjectRemoveRequest,
-	RuntimeProjectRemoveResponse,
-	RuntimeProjectsResponse,
-	RuntimeShellSessionStartRequest,
-	RuntimeShellSessionStartResponse,
-	RuntimeTaskSessionInputRequest,
-	RuntimeTaskSessionInputResponse,
-	RuntimeTaskSessionStartRequest,
-	RuntimeTaskSessionStartResponse,
-	RuntimeTaskSessionStopRequest,
-	RuntimeTaskSessionStopResponse,
-	RuntimeTaskWorkspaceInfoRequest,
-	RuntimeTaskWorkspaceInfoResponse,
-	RuntimeWorkspaceChangesRequest,
-	RuntimeWorkspaceChangesResponse,
-	RuntimeWorkspaceFileSearchRequest,
-	RuntimeWorkspaceFileSearchResponse,
-	RuntimeWorkspaceStateNotifyResponse,
-	RuntimeWorkspaceStateResponse,
-	RuntimeWorkspaceStateSaveRequest,
-	RuntimeWorktreeDeleteRequest,
-	RuntimeWorktreeDeleteResponse,
-	RuntimeWorktreeEnsureRequest,
-	RuntimeWorktreeEnsureResponse,
-} from "../core/api-contract";
 import {
+	type RuntimeBoardCard,
+	type RuntimeCommandRunRequest,
+	type RuntimeCommandRunResponse,
+	type RuntimeConfigResponse,
+	type RuntimeConfigSaveRequest,
+	type RuntimeDebugResetAllStateResponse,
+	type RuntimeGitCheckoutRequest,
+	type RuntimeGitCheckoutResponse,
+	type RuntimeGitCommitDiffRequest,
+	type RuntimeGitCommitDiffResponse,
+	type RuntimeGitDiscardResponse,
+	type RuntimeGitLogRequest,
+	type RuntimeGitLogResponse,
+	type RuntimeGitRefsResponse,
+	type RuntimeGitSummaryResponse,
+	type RuntimeGitSyncAction,
+	type RuntimeGitSyncResponse,
+	type RuntimeHookIngestRequest,
+	type RuntimeHookIngestResponse,
+	type RuntimeOpenFileRequest,
+	type RuntimeOpenFileResponse,
+	type RuntimeProjectAddRequest,
+	type RuntimeProjectAddResponse,
+	type RuntimeProjectDirectoryPickerResponse,
+	type RuntimeProjectRemoveRequest,
+	type RuntimeProjectRemoveResponse,
+	type RuntimeProjectsResponse,
+	type RuntimeShellSessionStartRequest,
+	type RuntimeShellSessionStartResponse,
+	type RuntimeTaskSessionInputRequest,
+	type RuntimeTaskSessionInputResponse,
+	type RuntimeTaskSessionStartRequest,
+	type RuntimeTaskSessionStartResponse,
+	type RuntimeTaskSessionStopRequest,
+	type RuntimeTaskSessionStopResponse,
+	type RuntimeTaskWorkspaceInfoRequest,
+	type RuntimeTaskWorkspaceInfoResponse,
+	type RuntimeWorkspaceChangesRequest,
+	type RuntimeWorkspaceChangesResponse,
+	type RuntimeWorkspaceFileSearchRequest,
+	type RuntimeWorkspaceFileSearchResponse,
+	type RuntimeWorkspaceStateNotifyResponse,
+	type RuntimeWorkspaceStateResponse,
+	type RuntimeWorkspaceStateSaveRequest,
+	type RuntimeWorktreeDeleteRequest,
+	type RuntimeWorktreeDeleteResponse,
+	type RuntimeWorktreeEnsureRequest,
+	type RuntimeWorktreeEnsureResponse,
+	runtimeBoardCardSchema,
 	runtimeCommandRunRequestSchema,
 	runtimeCommandRunResponseSchema,
 	runtimeConfigResponseSchema,
@@ -103,6 +103,32 @@ import {
 	runtimeWorktreeEnsureRequestSchema,
 	runtimeWorktreeEnsureResponseSchema,
 } from "../core/api-contract";
+import type {
+	ImportedIssueRefreshInput,
+	ImportedIssueStatusSyncInput,
+	ImportedLinearIssueResponse,
+	IntegrationStatus,
+	LinearCreateIssueInput,
+	LinearCreateIssueResponse,
+	LinearIssue,
+	LinearIssueImportInput,
+	LinearIssueListInput,
+	LinearIssueLookupInput,
+	LinearIssueSearchResult,
+} from "../integrations/linear-types";
+import {
+	importedIssueRefreshInputSchema,
+	importedIssueStatusSyncInputSchema,
+	importedLinearIssueResponseSchema,
+	integrationStatusSchema,
+	linearCreateIssueInputSchema,
+	linearCreateIssueResponseSchema,
+	linearIssueImportInputSchema,
+	linearIssueListInputSchema,
+	linearIssueLookupInputSchema,
+	linearIssueSchema,
+	linearIssueSearchResultSchema,
+} from "../integrations/linear-types";
 
 export interface RuntimeTrpcWorkspaceScope {
 	workspaceId: string;
@@ -209,6 +235,31 @@ export interface RuntimeTrpcContext {
 	};
 	hooksApi: {
 		ingest: (input: RuntimeHookIngestRequest) => Promise<RuntimeHookIngestResponse>;
+	};
+	integrationsApi: {
+		getIntegrationStatus: () => Promise<IntegrationStatus>;
+		listLinearIssues: (input: LinearIssueListInput) => Promise<LinearIssueSearchResult[]>;
+		getLinearIssue: (input: LinearIssueLookupInput) => Promise<LinearIssue>;
+		importLinearIssue: (
+			scope: RuntimeTrpcWorkspaceScope,
+			input: LinearIssueImportInput,
+		) => Promise<ImportedLinearIssueResponse>;
+		refreshImportedIssue: (
+			scope: RuntimeTrpcWorkspaceScope,
+			input: ImportedIssueRefreshInput,
+		) => Promise<RuntimeBoardCard>;
+		syncImportedIssueStatus: (
+			scope: RuntimeTrpcWorkspaceScope,
+			input: ImportedIssueStatusSyncInput,
+		) => Promise<RuntimeBoardCard>;
+		createLinearIssue: (
+			scope: RuntimeTrpcWorkspaceScope,
+			input: LinearCreateIssueInput,
+		) => Promise<LinearCreateIssueResponse>;
+		createLinearSubIssue: (
+			scope: RuntimeTrpcWorkspaceScope,
+			input: LinearCreateIssueInput,
+		) => Promise<LinearCreateIssueResponse>;
 	};
 }
 
@@ -434,6 +485,53 @@ export const runtimeAppRouter = t.router({
 			.output(runtimeHookIngestResponseSchema)
 			.mutation(async ({ ctx, input }) => {
 				return await ctx.hooksApi.ingest(input);
+			}),
+	}),
+	integrations: t.router({
+		getIntegrationStatus: t.procedure.output(integrationStatusSchema).query(async ({ ctx }) => {
+			return await ctx.integrationsApi.getIntegrationStatus();
+		}),
+		listLinearIssues: t.procedure
+			.input(linearIssueListInputSchema)
+			.output(z.array(linearIssueSearchResultSchema))
+			.query(async ({ ctx, input }) => {
+				return await ctx.integrationsApi.listLinearIssues(input);
+			}),
+		getLinearIssue: t.procedure
+			.input(linearIssueLookupInputSchema)
+			.output(linearIssueSchema)
+			.query(async ({ ctx, input }) => {
+				return await ctx.integrationsApi.getLinearIssue(input);
+			}),
+		importLinearIssue: workspaceProcedure
+			.input(linearIssueImportInputSchema)
+			.output(importedLinearIssueResponseSchema)
+			.mutation(async ({ ctx, input }) => {
+				return await ctx.integrationsApi.importLinearIssue(ctx.workspaceScope, input);
+			}),
+		refreshImportedIssue: workspaceProcedure
+			.input(importedIssueRefreshInputSchema)
+			.output(runtimeBoardCardSchema)
+			.mutation(async ({ ctx, input }) => {
+				return await ctx.integrationsApi.refreshImportedIssue(ctx.workspaceScope, input);
+			}),
+		syncImportedIssueStatus: workspaceProcedure
+			.input(importedIssueStatusSyncInputSchema)
+			.output(runtimeBoardCardSchema)
+			.mutation(async ({ ctx, input }) => {
+				return await ctx.integrationsApi.syncImportedIssueStatus(ctx.workspaceScope, input);
+			}),
+		createLinearIssue: workspaceProcedure
+			.input(linearCreateIssueInputSchema)
+			.output(linearCreateIssueResponseSchema)
+			.mutation(async ({ ctx, input }) => {
+				return await ctx.integrationsApi.createLinearIssue(ctx.workspaceScope, input);
+			}),
+		createLinearSubIssue: workspaceProcedure
+			.input(linearCreateIssueInputSchema)
+			.output(linearCreateIssueResponseSchema)
+			.mutation(async ({ ctx, input }) => {
+				return await ctx.integrationsApi.createLinearSubIssue(ctx.workspaceScope, input);
 			}),
 	}),
 });

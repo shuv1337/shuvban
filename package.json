@@ -79,6 +79,7 @@
     "vitest": "^4.1.0"
   },
   "dependencies": {
+    "@linear/sdk": "^80.1.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@trpc/client": "^11.11.0",
     "@trpc/server": "^11.11.0",

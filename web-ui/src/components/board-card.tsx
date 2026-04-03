@@ -4,6 +4,7 @@ import { AlertCircle, GitBranch, Play, RotateCcw, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ExternalIssueBadge } from "@/components/integrations/external-issue-badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { Spinner } from "@/components/ui/spinner";
@@ -501,15 +502,18 @@ export function BoardCard({
 							<div className="flex items-center gap-2" style={{ minHeight: 24 }}>
 								{statusMarker ? <div className="inline-flex items-center">{statusMarker}</div> : null}
 								<div ref={titleContainerRef} className="flex-1 min-w-0">
-									<p
-										ref={titleRef}
-										className={cn(
-											"kb-line-clamp-1 m-0 font-medium text-sm",
-											isTrashCard && "line-through text-text-tertiary",
-										)}
-									>
-										{displayPromptSplit.title}
-									</p>
+									<div className="flex items-center gap-1.5 min-w-0">
+										<p
+											ref={titleRef}
+											className={cn(
+												"kb-line-clamp-1 m-0 min-w-0 flex-1 font-medium text-sm",
+												isTrashCard && "line-through text-text-tertiary",
+											)}
+										>
+											{displayPromptSplit.title}
+										</p>
+										<ExternalIssueBadge card={card} className="shrink-0" />
+									</div>
 								</div>
 								{columnId === "backlog" ? (
 									<Button

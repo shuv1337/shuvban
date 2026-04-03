@@ -11,6 +11,7 @@ import { ClearTrashDialog } from "@/components/clear-trash-dialog";
 import { DebugDialog } from "@/components/debug-dialog";
 import { AgentTerminalPanel } from "@/components/detail-panels/agent-terminal-panel";
 import { GitHistoryView } from "@/components/git-history-view";
+import { LinearIssuePickerDialog } from "@/components/integrations/linear-issue-picker-dialog";
 import { ProjectNavigationPanel } from "@/components/project-navigation-panel";
 import { ResizableBottomPane } from "@/components/resizable-bottom-pane";
 import { RuntimeSettingsDialog, type RuntimeSettingsSection } from "@/components/runtime-settings-dialog";
@@ -40,6 +41,9 @@ import { useDebugTools } from "@/hooks/use-debug-tools";
 import { useDocumentVisibility } from "@/hooks/use-document-visibility";
 import { useFeaturebaseFeedbackWidget } from "@/hooks/use-featurebase-feedback-widget";
 import { useGitActions } from "@/hooks/use-git-actions";
+import { useImportedIssueActions } from "@/hooks/use-imported-issue-actions";
+import { useImportedIssueRefresh } from "@/hooks/use-imported-issue-refresh";
+import { useImportedIssueSync } from "@/hooks/use-imported-issue-sync";
 import { useOpenWorkspace } from "@/hooks/use-open-workspace";
 import { parseRemovedProjectPathFromStreamError, useProjectNavigation } from "@/hooks/use-project-navigation";
 import { useProjectUiState } from "@/hooks/use-project-ui-state";
@@ -76,6 +80,7 @@ export default function App(): ReactElement {
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [settingsInitialSection, setSettingsInitialSection] = useState<RuntimeSettingsSection | null>(null);
 	const [homeSidebarSection, setHomeSidebarSection] = useState<"projects" | "agent">("projects");
+	const [isLinearIssuePickerOpen, setIsLinearIssuePickerOpen] = useState(false);
 	const [isClearTrashDialogOpen, setIsClearTrashDialogOpen] = useState(false);
 	const [isGitHistoryOpen, setIsGitHistoryOpen] = useState(false);
 	const [pendingTaskStartAfterEditId, setPendingTaskStartAfterEditId] = useState<string | null>(null);
@@ -212,6 +217,26 @@ export default function App(): ReactElement {
 	useEffect(() => {
 		replaceWorkspaceMetadata(workspaceMetadata);
 	}, [workspaceMetadata]);
+
+	useImportedIssueSync({
+		workspaceId: currentProjectId,
+		board,
+		setBoard,
+	});
+	useImportedIssueRefresh({
+		workspaceId: currentProjectId,
+		board,
+		setBoard,
+		enabled: isDocumentVisible,
+	});
+	const {
+		loadingTaskIds: importedIssueActionLoadingById,
+		handleRefreshImportedIssue,
+		handleSyncImportedIssueStatus,
+	} = useImportedIssueActions({
+		workspaceId: currentProjectId,
+		setBoard,
+	});
 
 	useEffect(() => {
 		if (!isProjectSwitching) {
@@ -737,6 +762,7 @@ export default function App(): ReactElement {
 					onAddProject={() => {
 						void handleAddProject();
 					}}
+					onImportFromLinear={() => setIsLinearIssuePickerOpen(true)}
 				/>
 			) : null}
 			<div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -972,6 +998,9 @@ export default function App(): ReactElement {
 								isBottomTerminalExpanded={isDetailTerminalExpanded}
 								onBottomTerminalToggleExpand={handleToggleExpandDetailTerminal}
 								isDocumentVisible={isDocumentVisible}
+								onRefreshImportedIssue={handleRefreshImportedIssue}
+								onSyncImportedIssueStatus={handleSyncImportedIssueStatus}
+								importedIssueActionLoadingById={importedIssueActionLoadingById}
 							/>
 						</div>
 					) : null}
@@ -1023,6 +1052,11 @@ export default function App(): ReactElement {
 				branchRef={newTaskBranchRef}
 				branchOptions={createTaskBranchOptions}
 				onBranchRefChange={setNewTaskBranchRef}
+			/>
+			<LinearIssuePickerDialog
+				open={isLinearIssuePickerOpen}
+				onOpenChange={setIsLinearIssuePickerOpen}
+				workspaceId={currentProjectId}
 			/>
 			<ClearTrashDialog
 				open={isClearTrashDialogOpen}

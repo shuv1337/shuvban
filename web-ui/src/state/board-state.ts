@@ -107,6 +107,8 @@ function normalizeCard(rawCard: unknown): BoardCard | null {
 		baseRef?: unknown;
 		createdAt?: unknown;
 		updatedAt?: unknown;
+		externalSource?: unknown;
+		externalSync?: unknown;
 	};
 	const prompt = typeof card.prompt === "string" ? card.prompt.trim() : "";
 	if (!prompt) {
@@ -118,6 +120,66 @@ function normalizeCard(rawCard: unknown): BoardCard | null {
 	}
 
 	const now = Date.now();
+
+	const rawExternalSource =
+		card.externalSource && typeof card.externalSource === "object"
+			? (card.externalSource as {
+					provider?: unknown;
+					issueId?: unknown;
+					identifier?: unknown;
+					url?: unknown;
+					teamId?: unknown;
+					projectId?: unknown;
+					parentIssueId?: unknown;
+					lastRemoteUpdatedAt?: unknown;
+					lastSyncedAt?: unknown;
+					remoteState?: unknown;
+					labelNames?: unknown;
+				})
+			: null;
+	const rawRemoteState =
+		rawExternalSource?.remoteState && typeof rawExternalSource.remoteState === "object"
+			? (rawExternalSource.remoteState as { id?: unknown; name?: unknown; type?: unknown })
+			: null;
+	const externalSource = rawExternalSource
+		? {
+				provider: "linear" as const,
+				issueId: typeof rawExternalSource.issueId === "string" ? rawExternalSource.issueId : "",
+				identifier: typeof rawExternalSource.identifier === "string" ? rawExternalSource.identifier : "",
+				url: typeof rawExternalSource.url === "string" ? rawExternalSource.url : "",
+				teamId: typeof rawExternalSource.teamId === "string" ? rawExternalSource.teamId : null,
+				projectId: typeof rawExternalSource.projectId === "string" ? rawExternalSource.projectId : null,
+				parentIssueId: typeof rawExternalSource.parentIssueId === "string" ? rawExternalSource.parentIssueId : null,
+				lastRemoteUpdatedAt:
+					typeof rawExternalSource.lastRemoteUpdatedAt === "number" ? rawExternalSource.lastRemoteUpdatedAt : null,
+				lastSyncedAt: typeof rawExternalSource.lastSyncedAt === "number" ? rawExternalSource.lastSyncedAt : null,
+				remoteState: rawRemoteState
+					? {
+							id: typeof rawRemoteState.id === "string" ? rawRemoteState.id : "",
+							name: typeof rawRemoteState.name === "string" ? rawRemoteState.name : "",
+							type: typeof rawRemoteState.type === "string" ? rawRemoteState.type : "",
+						}
+					: undefined,
+				labelNames: Array.isArray(rawExternalSource.labelNames)
+					? rawExternalSource.labelNames.filter((label: unknown): label is string => typeof label === "string")
+					: undefined,
+			}
+		: undefined;
+	const rawExternalSync =
+		card.externalSync && typeof card.externalSync === "object"
+			? (card.externalSync as { status?: unknown; lastError?: unknown })
+			: null;
+	const externalSync = rawExternalSync
+		? {
+				status:
+					rawExternalSync.status === "syncing"
+						? ("syncing" as const)
+						: rawExternalSync.status === "error"
+							? ("error" as const)
+							: ("idle" as const),
+				lastError: typeof rawExternalSync.lastError === "string" ? rawExternalSync.lastError : null,
+			}
+		: undefined;
 
 	return {
 		id: typeof card.id === "string" && card.id ? card.id : createShortTaskId(createBrowserUuid),
@@ -131,6 +193,11 @@ function normalizeCard(rawCard: unknown): BoardCard | null {
 		baseRef,
 		createdAt: typeof card.createdAt === "number" ? card.createdAt : now,
 		updatedAt: typeof card.updatedAt === "number" ? card.updatedAt : now,
+		externalSource:
+			externalSource && externalSource.issueId && externalSource.identifier && externalSource.url
+				? externalSource
+				: undefined,
+		externalSync,
 	};
 }
 

@@ -87,6 +87,37 @@ export const runtimeTaskImageSchema = z.object({
 });
 export type RuntimeTaskImage = z.infer<typeof runtimeTaskImageSchema>;
 
+export const runtimeExternalIssueProviderSchema = z.enum(["linear"]);
+export type RuntimeExternalIssueProvider = z.infer<typeof runtimeExternalIssueProviderSchema>;
+
+export const runtimeExternalIssueRemoteStateSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	type: z.string(),
+});
+export type RuntimeExternalIssueRemoteState = z.infer<typeof runtimeExternalIssueRemoteStateSchema>;
+
+export const runtimeBoardCardExternalSourceSchema = z.object({
+	provider: runtimeExternalIssueProviderSchema,
+	issueId: z.string(),
+	identifier: z.string(),
+	url: z.string(),
+	teamId: z.string().nullable(),
+	projectId: z.string().nullable(),
+	parentIssueId: z.string().nullable(),
+	lastRemoteUpdatedAt: z.number().nullable(),
+	lastSyncedAt: z.number().nullable(),
+	remoteState: runtimeExternalIssueRemoteStateSchema.nullable().optional(),
+	labelNames: z.array(z.string()).optional(),
+});
+export type RuntimeBoardCardExternalSource = z.infer<typeof runtimeBoardCardExternalSourceSchema>;
+
+export const runtimeBoardCardExternalSyncSchema = z.object({
+	status: z.enum(["idle", "syncing", "error"]),
+	lastError: z.string().nullable(),
+});
+export type RuntimeBoardCardExternalSync = z.infer<typeof runtimeBoardCardExternalSyncSchema>;
+
 export const runtimeBoardCardSchema = z.object({
 	id: z.string(),
 	prompt: z.string(),
@@ -97,6 +128,8 @@ export const runtimeBoardCardSchema = z.object({
 	baseRef: z.string(),
 	createdAt: z.number(),
 	updatedAt: z.number(),
+	externalSource: runtimeBoardCardExternalSourceSchema.optional(),
+	externalSync: runtimeBoardCardExternalSyncSchema.optional(),
 });
 export type RuntimeBoardCard = z.infer<typeof runtimeBoardCardSchema>;
 

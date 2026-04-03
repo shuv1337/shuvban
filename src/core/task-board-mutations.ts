@@ -282,6 +282,8 @@ export function addTaskToColumn(
 		baseRef,
 		createdAt: now,
 		updatedAt: now,
+		externalSource: undefined,
+		externalSync: undefined,
 	};
 
 	const targetColumnIndex = board.columns.findIndex((column) => column.id === columnId);
@@ -594,6 +596,8 @@ export function updateTask(
 				images: input.images === undefined ? card.images : cloneTaskImages(input.images),
 				baseRef,
 				updatedAt: now,
+				externalSource: card.externalSource,
+				externalSync: card.externalSync,
 			};
 			return updatedTask;
 		});

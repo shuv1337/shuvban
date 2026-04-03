@@ -7,6 +7,7 @@ import { AgentTerminalPanel } from "@/components/detail-panels/agent-terminal-pa
 import { ColumnContextPanel } from "@/components/detail-panels/column-context-panel";
 import { type DiffLineComment, DiffViewerPanel } from "@/components/detail-panels/diff-viewer-panel";
 import { FileTreePanel } from "@/components/detail-panels/file-tree-panel";
+import { ExternalIssueBadge } from "@/components/integrations/external-issue-badge";
 import { ResizableBottomPane } from "@/components/resizable-bottom-pane";
 import { Button } from "@/components/ui/button";
 import type {
@@ -18,7 +19,7 @@ import type {
 import { useRuntimeWorkspaceChanges } from "@/runtime/use-runtime-workspace-changes";
 import { useTaskWorkspaceStateVersionValue } from "@/stores/workspace-metadata-store";
 import { TERMINAL_THEME_COLORS } from "@/terminal/theme-colors";
-import { type BoardCard, type CardSelection, getTaskAutoReviewCancelButtonLabel } from "@/types";
+import { type BoardCard, type BoardColumnId, type CardSelection, getTaskAutoReviewCancelButtonLabel } from "@/types";
 import { useUnmount, useWindowEvent } from "@/utils/react-use";
 
 // We still poll the open detail diff because line content can change without changing
@@ -225,6 +226,9 @@ export function CardDetailView({
 	isBottomTerminalExpanded,
 	onBottomTerminalToggleExpand,
 	isDocumentVisible = true,
+	onRefreshImportedIssue,
+	onSyncImportedIssueStatus,
+	importedIssueActionLoadingById,
 }: {
 	selection: CardSelection;
 	currentProjectId: string | null;
@@ -274,6 +278,9 @@ export function CardDetailView({
 	isBottomTerminalExpanded?: boolean;
 	onBottomTerminalToggleExpand?: () => void;
 	isDocumentVisible?: boolean;
+	onRefreshImportedIssue?: (taskId: string) => void;
+	onSyncImportedIssueStatus?: (taskId: string, fromColumnId: BoardColumnId | null) => void;
+	importedIssueActionLoadingById?: Record<string, boolean>;
 }): React.ReactElement {
 	const [selectedPath, setSelectedPath] = useState<string | null>(null);
 	const [diffComments, setDiffComments] = useState<Map<string, DiffLineComment>>(new Map());
@@ -499,6 +506,45 @@ export function CardDetailView({
 				background: "var(--color-surface-0)",
 			}}
 		>
+			{selection.card.externalSource ? (
+				<div className="absolute right-4 top-3 z-[3] flex items-center gap-2 rounded-md border border-border bg-surface-2 px-2 py-1 text-xs text-text-secondary">
+					<ExternalIssueBadge card={selection.card} />
+					<a
+						href={selection.card.externalSource.url}
+						target="_blank"
+						rel="noreferrer"
+						className="text-text-secondary hover:text-text-primary"
+					>
+						Open source issue
+					</a>
+					{selection.card.externalSource.remoteState ? (
+						<span>• {selection.card.externalSource.remoteState.name}</span>
+					) : null}
+					{selection.card.externalSync?.lastError ? (
+						<span className="text-status-red">• {selection.card.externalSync.lastError}</span>
+					) : null}
+					{onRefreshImportedIssue ? (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => onRefreshImportedIssue(selection.card.id)}
+							disabled={importedIssueActionLoadingById?.[selection.card.id] === true}
+						>
+							Refresh
+						</Button>
+					) : null}
+					{onSyncImportedIssueStatus ? (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => onSyncImportedIssueStatus(selection.card.id, selection.column.id)}
+							disabled={importedIssueActionLoadingById?.[selection.card.id] === true}
+						>
+							Sync
+						</Button>
+					) : null}
+				</div>
+			) : null}
 			{!isDiffExpanded ? (
 				<ColumnContextPanel
 					selection={selection}

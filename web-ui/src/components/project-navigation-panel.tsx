@@ -2,6 +2,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, ChevronUp, Ellipsis, Plus } from "lucide-react";
 import { type MouseEvent as ReactMouseEvent, type ReactNode, useCallback, useRef, useState } from "react";
+import { LinearConnectPanel } from "@/components/integrations/linear-connect-panel";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import {
@@ -18,6 +19,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { ShuvbanIcon } from "@/components/ui/shuvban-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { openFeaturebaseFeedbackWidget } from "@/hooks/use-featurebase-feedback-widget";
+import { useLinearIntegrationStatus } from "@/hooks/use-linear-integration-status";
 import type { RuntimeProjectSummary } from "@/runtime/types";
 import { LocalStorageKey, readLocalStorageItem, writeLocalStorageItem } from "@/storage/local-storage-store";
 import { formatPathForDisplay } from "@/utils/path-display";
@@ -81,6 +83,7 @@ export function ProjectNavigationPanel({
 	onSelectProject,
 	onRemoveProject,
 	onAddProject,
+	onImportFromLinear,
 }: {
 	projects: RuntimeProjectSummary[];
 	isLoadingProjects?: boolean;
@@ -93,8 +96,10 @@ export function ProjectNavigationPanel({
 	onSelectProject: (projectId: string) => void;
 	onRemoveProject: (projectId: string) => Promise<boolean>;
 	onAddProject: () => void;
+	onImportFromLinear?: () => void;
 }): React.ReactElement {
 	const sortedProjects = [...projects].sort((a, b) => a.path.localeCompare(b.path));
+	const linearStatus = useLinearIntegrationStatus(currentProjectId).data;
 
 	const [pendingProjectRemoval, setPendingProjectRemoval] = useState<RuntimeProjectSummary | null>(null);
 	const isProjectRemovalPending = pendingProjectRemoval !== null && removingProjectId === pendingProjectRemoval.id;
@@ -332,16 +337,21 @@ export function ProjectNavigationPanel({
 						))}
 
 						{!isLoadingProjects ? (
-							<button
-								type="button"
-								className="kb-project-row flex cursor-pointer items-center gap-1.5 rounded-md text-text-secondary hover:text-text-primary"
-								style={{ padding: "6px 8px" }}
-								onClick={onAddProject}
-								disabled={removingProjectId !== null}
-							>
-								<Plus size={14} className="shrink-0" />
-								<span className="text-sm">Add Project</span>
-							</button>
+							<>
+								<button
+									type="button"
+									className="kb-project-row flex cursor-pointer items-center gap-1.5 rounded-md text-text-secondary hover:text-text-primary"
+									style={{ padding: "6px 8px" }}
+									onClick={onAddProject}
+									disabled={removingProjectId !== null}
+								>
+									<Plus size={14} className="shrink-0" />
+									<span className="text-sm">Add Project</span>
+								</button>
+								<div className="pt-2">
+									<LinearConnectPanel status={linearStatus} onImport={onImportFromLinear} />
+								</div>
+							</>
 						) : null}
 					</div>
 					<ShortcutsCard />

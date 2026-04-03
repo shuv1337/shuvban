@@ -20,6 +20,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 
 import type { BranchSelectOption } from "@/components/branch-select-dropdown";
 import { BranchSelectDropdown } from "@/components/branch-select-dropdown";
+import { LinearIssuePickerDialog } from "@/components/integrations/linear-issue-picker-dialog";
 import { TaskPromptComposer } from "@/components/task-prompt-composer";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from "@/components/ui/dialog";
@@ -153,6 +154,7 @@ export function TaskCreateDialog({
 		DEFAULT_PRIMARY_START_ACTION,
 		normalizeStoredTaskCreateStartAction,
 	);
+	const [isLinearPickerOpen, setIsLinearPickerOpen] = useState(false);
 
 	const detectedItems = useMemo(() => parseListItems(prompt), [prompt]);
 	const validTaskCount = useMemo(() => taskPrompts.filter((p) => p.trim()).length, [taskPrompts]);
@@ -542,6 +544,11 @@ export function TaskCreateDialog({
 				</div>
 			</DialogBody>
 			<DialogFooter>
+				{mode === "single" && workspaceId ? (
+					<Button variant="ghost" size="sm" onClick={() => setIsLinearPickerOpen(true)}>
+						Import from Linear
+					</Button>
+				) : null}
 				<label
 					htmlFor={createMoreId}
 					className="mr-auto flex items-center gap-2 text-[12px] text-text-primary cursor-pointer select-none"
@@ -649,6 +656,11 @@ export function TaskCreateDialog({
 					</>
 				)}
 			</DialogFooter>
+			<LinearIssuePickerDialog
+				open={isLinearPickerOpen}
+				onOpenChange={setIsLinearPickerOpen}
+				workspaceId={workspaceId}
+			/>
 		</Dialog>
 	);
 }
